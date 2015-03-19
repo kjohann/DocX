@@ -1834,14 +1834,15 @@ namespace Novacode
         /// <param name="listType">The type of list to be created: Bulleted or Numbered.</param>
         /// <param name="startNumber">The number start number for the list. </param>
         /// <param name="trackChanges">Enable change tracking</param>
+        /// <param name="continueNumbering">Set to true if you want to continue numbering from the previous numbered list</param>
         /// <returns>
         /// The created List. Call AddListItem(...) to add more elements to the list.
         /// Write the list to the Document with InsertList(...) once the list has all the desired 
         /// elements, otherwise the list will not be included in the working Document.
         /// </returns>
-        public List AddList(string listText = null, int level = 0, ListItemType listType = ListItemType.Numbered, int? startNumber = null, bool trackChanges = false)
+        public List AddList(string listText = null, int level = 0, ListItemType listType = ListItemType.Numbered, int? startNumber = null, bool trackChanges = false, bool continueNumbering = false)
         {
-            return AddListItem(new List(this, null), listText, level, listType, startNumber, trackChanges);
+            return AddListItem(new List(this, null), listText, level, listType, startNumber, trackChanges, continueNumbering);
         }
 
         /// <summary>
@@ -1853,15 +1854,16 @@ namespace Novacode
         /// <param name="startNumber">The number start number for the list. </param>
         /// <param name="trackChanges">Enable change tracking</param>
         /// <param name="listType">Numbered or Bulleted list type. </param>
+        /// /// <param name="continueNumbering">Set to true if you want to continue numbering from the previous numbered list</param>
         /// <returns>
         /// The created List. Call AddListItem(...) to add more elements to the list.
         /// Write the list to the Document with InsertList(...) once the list has all the desired 
         /// elements, otherwise the list will not be included in the working Document.
         /// </returns>
-        public List AddListItem(List list, string listText, int level = 0, ListItemType listType = ListItemType.Numbered, int? startNumber = null, bool trackChanges = false)
+        public List AddListItem(List list, string listText, int level = 0, ListItemType listType = ListItemType.Numbered, int? startNumber = null, bool trackChanges = false, bool continueNumbering = false)
         {
-
-            return HelperFunctions.CreateItemInList(list, listText, level, listType, startNumber, trackChanges);
+            if(startNumber.HasValue && continueNumbering) throw new InvalidOperationException("Cannot specify a start number and at the same time continue numbering from another list");
+            return HelperFunctions.CreateItemInList(list, listText, level, listType, startNumber, trackChanges, continueNumbering);
         }
 
         /// <summary>
