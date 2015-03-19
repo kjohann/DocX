@@ -72,3 +72,4 @@ packages/
 
 #UpgradeLog
 **/UpgradeLog*
+**/*.orig
