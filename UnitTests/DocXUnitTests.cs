@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.ObjectModel;
+using System.Xml;
+using Formatting = Novacode.Formatting;
 
 namespace UnitTests
 {
@@ -2038,7 +2040,110 @@ namespace UnitTests
           }
       }
 
+        [TestMethod]
+        public void CreateTableOfContents_WithTitleAndSwitches_SetsExpectedXml()
+        {
+            #region ExpectedXmlBase
+              const string tocXmlBase = @"<w:sdt xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'>
+                  <w:sdtPr>
+                    <w:docPartObj>
+                      <w:docPartGallery w:val='Table of Contents'/>
+                      <w:docPartUnique/>
+                    </w:docPartObj>\
+                  </w:sdtPr>
+                  <w:sdtEndPr>
+                    <w:rPr>
+                      <w:rFonts w:asciiTheme='minorHAnsi' w:cstheme='minorBidi' w:eastAsiaTheme='minorHAnsi' w:hAnsiTheme='minorHAnsi'/>
+                      <w:color w:val='auto'/>
+                      <w:sz w:val='22'/>
+                      <w:szCs w:val='22'/>
+                      <w:lang w:eastAsia='en-US'/>
+                    </w:rPr>
+                  </w:sdtEndPr>
+                  <w:sdtContent>
+                    <w:p>
+                      <w:pPr>
+                        <w:pStyle w:val='{0}'/>
+                      </w:pPr>
+                      <w:r>
+                        <w:t>{1}</w:t>
+                      </w:r>
+                    </w:p>
+                    <w:p>
+                      <w:pPr>
+                        <w:pStyle w:val='TOC1'/>
+                        <w:tabs>
+                          <w:tab w:val='right' w:leader='dot' w:pos='{2}'/>
+                        </w:tabs>
+                        <w:rPr>
+                          <w:noProof/>
+                        </w:rPr>
+                      </w:pPr>
+                      <w:r>
+                        <w:fldChar w:fldCharType='begin' w:dirty='true'/>
+                      </w:r>
+                      <w:r>
+                        <w:instrText xml:space='preserve'> {3} </w:instrText>
+                      </w:r>
+                      <w:r>
+                        <w:fldChar w:fldCharType='separate'/>
+                      </w:r>
+                    </w:p>
+                    <w:p>
+                      <w:r>
+                        <w:rPr>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:noProof/>
+                        </w:rPr>
+                        <w:fldChar w:fldCharType='end'/>
+                      </w:r>
+                    </w:p>
+                  </w:sdtContent>
+                </w:sdt>
+            ";
+              #endregion
 
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+
+                const string title = "TestTitle";
+                const int rightPos = 9350;
+                const TableOfContentsSwitches switches =
+                    TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z |
+                    TableOfContentsSwitches.U;
+
+                var toc = TableOfContents.CreateTableOfContents(document, title, switches);
+
+                const string switchString = @"TOC \h \o '1-3' \u \z";
+                var expectedString = string.Format(tocXmlBase, "TOCHeading", title, rightPos, switchString);
+
+                var expectedReader = XmlReader.Create(new StringReader(expectedString));
+                var expected = XElement.Load(expectedReader);                
+
+                AssertToc(expected, toc.Xml, title, rightPos, switchString);
+            }
+        }
+
+        private void AssertToc(XElement expected, XElement actual, string title, int rightPos, string switches)
+        {
+            var expectedDecendants = expected.Descendants().ToList();
+            var actualDecendants = actual.Descendants().ToList();
+
+            Assert.AreEqual(expectedDecendants.Count, actualDecendants.Count);
+            Assert.IsNotNull(expectedDecendants.FirstOrDefault(x => x.Name == DocX.w + "pStyle"));
+            Assert.AreEqual(expectedDecendants.First(x => x.Name == DocX.w + "pStyle").Attribute(DocX.w + "val").ToString(), actualDecendants.First(x => x.Name == DocX.w + "pStyle").Attribute(DocX.w + "val").ToString());
+            Assert.IsNotNull(expectedDecendants.FirstOrDefault(x => x.Name == DocX.w + "t"));
+            Assert.AreEqual(expectedDecendants.First(x => x.Name == DocX.w + "t").ToString(), actualDecendants.First(x => x.Name == DocX.w + "t").ToString());
+            Assert.AreEqual(title, actualDecendants.First(x => x.Name == DocX.w + "t").Value.Trim());
+            Assert.IsNotNull(expectedDecendants.FirstOrDefault(x => x.Name == DocX.w + "tab"));
+            Assert.AreEqual(expectedDecendants.First(x => x.Name == DocX.w + "tab").Attribute(DocX.w + "pos").ToString(), actualDecendants.First(x => x.Name == DocX.w + "tab").Attribute(DocX.w + "pos").ToString());
+            Assert.AreEqual(rightPos.ToString(), actualDecendants.First(x => x.Name == DocX.w + "tab").Attribute(DocX.w + "pos").Value);
+            Assert.IsNotNull(expectedDecendants.FirstOrDefault(x => x.Name == DocX.w + "instrText"));
+            Assert.AreEqual(expectedDecendants.First(x => x.Name == DocX.w + "instrText").ToString(), actualDecendants.First(x => x.Name == DocX.w + "instrText").ToString());
+            Assert.AreEqual(switches, actualDecendants.First(x => x.Name == DocX.w + "instrText").Value.Trim());
+
+        }
     }
 }
        
