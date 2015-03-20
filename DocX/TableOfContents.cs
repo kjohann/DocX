@@ -79,14 +79,22 @@ namespace Novacode
 
         private TableOfContents(DocX document, XElement xml) : base(document, xml)
         {
-            
-        }
+            UpdateSettings(document);
+        }        
 
         internal static TableOfContents CreateTableOfContents(DocX document, string title, TableOfContentsSwitches switches, string headerStyle = null, int lastIncludeLevel = 3, int? rightTabPos = null)
         {
             var reader = XmlReader.Create(new StringReader(string.Format(TocXmlBase, headerStyle ?? HeaderStyle, title, rightTabPos ?? RightTabPos, BuildSwitchString(switches, lastIncludeLevel))));
             var xml = XElement.Load(reader);
             return new TableOfContents(document, xml);
+        }
+
+        private void UpdateSettings(DocX document)
+        {
+            if (document.settings.Descendants().Any(x => x.Name.Equals(DocX.w + "updateFields"))) return;
+            
+            var element = new XElement(XName.Get("updateFields", DocX.w.NamespaceName), new XAttribute(DocX.w + "val", true));
+            document.settings.Root.Add(element);
         }
 
         private static string BuildSwitchString(TableOfContentsSwitches switches, int lastIncludeLevel)
@@ -104,5 +112,6 @@ namespace Novacode
 
             return switchString;
         }
+
     }
 }

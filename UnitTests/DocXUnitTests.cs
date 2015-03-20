@@ -2040,11 +2040,8 @@ namespace UnitTests
           }
       }
 
-        [TestMethod]
-        public void CreateTableOfContents_WithTitleAndSwitches_SetsExpectedXml()
-        {
-            #region ExpectedXmlBase
-              const string tocXmlBase = @"<w:sdt xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'>
+      #region ExpectedXmlBase
+      private const string TocXmlBase = @"<w:sdt xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'>
                   <w:sdtPr>
                     <w:docPartObj>
                       <w:docPartGallery w:val='Table of Contents'/>
@@ -2102,11 +2099,13 @@ namespace UnitTests
                   </w:sdtContent>
                 </w:sdt>
             ";
-              #endregion
+      #endregion
 
+        [TestMethod]
+        public void CreateTableOfContents_WithTitleAndSwitches_SetsExpectedXml()
+        {            
             using (var document = DocX.Create("TableOfContents Test.docx"))
             {
-
                 const string title = "TestTitle";
                 const int rightPos = 9350;
                 const TableOfContentsSwitches switches =
@@ -2116,12 +2115,74 @@ namespace UnitTests
                 var toc = TableOfContents.CreateTableOfContents(document, title, switches);
 
                 const string switchString = @"TOC \h \o '1-3' \u \z";
-                var expectedString = string.Format(tocXmlBase, "TOCHeading", title, rightPos, switchString);
+                var expectedString = string.Format(TocXmlBase, "TOCHeading", title, rightPos, switchString);
 
                 var expectedReader = XmlReader.Create(new StringReader(expectedString));
                 var expected = XElement.Load(expectedReader);                
 
                 AssertToc(expected, toc.Xml, title, rightPos, switchString);
+            }
+        }
+
+        [TestMethod]
+        public void CreateTableOfContents_WithTitleSwitchesHeaderStyleLastIncludeLevelRightTabPos_SetsExpectedXml()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                const string title = "TestTitle";
+                const int rightPos = 1337;
+                const string style = "TestStyle";
+                const TableOfContentsSwitches switches =
+                    TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z |
+                    TableOfContentsSwitches.U;
+
+                var toc = TableOfContents.CreateTableOfContents(document, title, switches, style, 6, rightPos);
+
+                const string switchString = @"TOC \h \o '1-6' \u \z";
+                var expectedString = string.Format(TocXmlBase, style, title, rightPos, switchString);
+
+                var expectedReader = XmlReader.Create(new StringReader(expectedString));
+                var expected = XElement.Load(expectedReader);
+
+                AssertToc(expected, toc.Xml, title, rightPos, switchString);
+            }
+        }
+
+        [TestMethod]
+        public void CreateTableOfContents_WhenCalled_AddsUpdateFieldsWithValueTrueToSettings()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                const string title = "TestTitle";
+                const TableOfContentsSwitches switches =
+                    TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z |
+                    TableOfContentsSwitches.U;
+
+                TableOfContents.CreateTableOfContents(document, title, switches);
+
+                var updateField = document.settings.Descendants().FirstOrDefault(x => x.Name == DocX.w + "updateFields");
+                Assert.IsNotNull(updateField);
+                Assert.AreEqual("true", updateField.Attribute(DocX.w + "val").Value);
+            }
+        }
+
+        [TestMethod]
+        public void CreateTableOfContents_WhenCalledSettingsAlreadyHasUpdateFields_DoesNotAddUpdateFiuelds()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                var element = new XElement(XName.Get("updateFields", DocX.w.NamespaceName), new XAttribute(DocX.w + "val", true));
+                document.settings.Root.Add(element);
+                const string title = "TestTitle";
+                const TableOfContentsSwitches switches =
+                    TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z |
+                    TableOfContentsSwitches.U;
+
+                TableOfContents.CreateTableOfContents(document, title, switches);
+
+                var updateFields = document.settings.Descendants().Where(x => x.Name == DocX.w + "updateFields").ToList();
+                Assert.AreEqual(1, updateFields.Count());
+                Assert.AreEqual(element, updateFields.First());
             }
         }
 
