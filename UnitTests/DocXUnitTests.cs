@@ -2516,6 +2516,95 @@ namespace UnitTests
                 Assert.IsTrue(p3.Xml.IsAfter(tocElement));
             }
         }
+
+        [TestMethod]
+        public void ValidateBookmark_WhenCalledWithNameOfNonMatchingBookmark_ReturnsFalse()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                var p = document.InsertParagraph("No bookmark here");
+
+                Assert.IsFalse(p.ValidateBookmark("Team Rubberduck"));
+            }
+        }
+
+        [TestMethod]
+        public void ValidateBookmark_WhenCalledWithNameOfMatchingBookmark_ReturnsTrue()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                var p = document.InsertParagraph("Here's a bookmark!");
+                const string bookmarkName = "Team Rubberduck";
+
+                p.AppendBookmark(bookmarkName);
+
+                Assert.IsTrue(p.ValidateBookmark("Team Rubberduck"));
+            }
+        }
+
+        [TestMethod]
+        public void ValidateBookmarks_WhenCalledWithMatchingBookmarkNameInHeader_ReturnsEmpty()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                document.AddHeaders();
+                var p = document.Headers.first.InsertParagraph("Here's a bookmark!");
+                const string bookmarkName = "Team Rubberduck";
+
+                p.AppendBookmark(bookmarkName);
+
+                Assert.IsTrue(document.ValidateBookmarks("Team Rubberduck").Length == 0);
+            }
+        }
+
+        [TestMethod]
+        public void ValidateBookmarks_WhenCalledWithMatchingBookmarkNameInMainDocument_ReturnsEmpty()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                var p = document.InsertParagraph("Here's a bookmark!");
+                const string bookmarkName = "Team Rubberduck";
+
+                p.AppendBookmark(bookmarkName);
+
+                Assert.IsTrue(document.ValidateBookmarks("Team Rubberduck").Length == 0);
+            }
+        }
+
+        [TestMethod]
+        public void ValidateBookmarks_WhenCalledWithMatchingBookmarkNameInFooters_ReturnsEmpty()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                document.AddFooters();
+                var p = document.Footers.first.InsertParagraph("Here's a bookmark!");
+                const string bookmarkName = "Team Rubberduck";
+
+                p.AppendBookmark(bookmarkName);
+
+                Assert.IsTrue(document.ValidateBookmarks("Team Rubberduck").Length == 0);
+            }
+        }
+
+        [TestMethod]
+        public void ValidateBookmarks_WhenCalledWithNoMatchingBookmarkNames_ReturnsExpected()
+        {
+            using (var document = DocX.Create("Bookmark validate.docx"))
+            {
+                document.AddHeaders();
+                var p = document.Headers.first.InsertParagraph("Here's a bookmark!");
+
+                p.AppendBookmark("Not in search");
+
+                var bookmarkNames = new[] {"Team Rubberduck", "is", "the most", "awesome people"};
+
+                var result = document.ValidateBookmarks(bookmarkNames);
+                for (var i = 0; i < bookmarkNames.Length; i++)
+                {
+                    Assert.AreEqual(bookmarkNames[i], result[i]);
+                }
+            }
+        }        
     }
 }
        
