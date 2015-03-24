@@ -1841,6 +1841,30 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void ParagraphAppendHyperLink_ParagraphIsListItem_ShouldNotThrow()
+        {
+            using (var document = DocX.Create("HyperlinkList.docx"))
+            {
+                var list = document.AddList("Item 1", listType: ListItemType.Numbered);
+                document.AddListItem(list, "Item 2");
+                document.AddListItem(list, "Item 3");
+
+                Uri uri;
+                Uri.TryCreate("http://www.google.com", UriKind.RelativeOrAbsolute, out uri);
+                var hLink = document.AddHyperlink("Google", uri);
+                var item2 = list.Items[1];
+
+                item2.InsertText("\nMore text\n");
+                item2.AppendHyperlink(hLink);
+
+                item2.InsertText("\nEven more text");
+
+                document.InsertList(list);
+                document.Save();
+            }
+        }
+
 
         [TestMethod]
         public void WhileReadingWhenTextIsBoldItalicUnderlineItShouldReadTheProperFormatting()

@@ -1863,7 +1863,14 @@ namespace Novacode
         public List AddListItem(List list, string listText, int level = 0, ListItemType listType = ListItemType.Numbered, int? startNumber = null, bool trackChanges = false, bool continueNumbering = false)
         {
             if(startNumber.HasValue && continueNumbering) throw new InvalidOperationException("Cannot specify a start number and at the same time continue numbering from another list");
-            return HelperFunctions.CreateItemInList(list, listText, level, listType, startNumber, trackChanges, continueNumbering);
+            var listToReturn = HelperFunctions.CreateItemInList(list, listText, level, listType, startNumber, trackChanges, continueNumbering);
+            var lastItem = listToReturn.Items.LastOrDefault();
+            if (lastItem != null)
+            {
+                lastItem.PackagePart = mainPart;
+            }
+            return listToReturn;
+
         }
 
         /// <summary>
@@ -1874,19 +1881,16 @@ namespace Novacode
         public new List InsertList(List list)
         {
             base.InsertList(list);
-            list.Items.ForEach(i => i.mainPart = mainPart);
             return list;
         }
         public new List InsertList(List list, System.Drawing.FontFamily fontFamily, double fontSize)
         {
             base.InsertList(list, fontFamily, fontSize);
-            list.Items.ForEach(i => i.mainPart = mainPart);
             return list;
         }
         public new List InsertList(List list, double fontSize)
         {
             base.InsertList(list, fontSize);
-            list.Items.ForEach(i => i.mainPart = mainPart);
             return list;
         }
 
@@ -1899,7 +1903,6 @@ namespace Novacode
         public new List InsertList(int index, List list)
         {
             base.InsertList(index, list);
-            list.Items.ForEach(i => i.mainPart = mainPart);
             return list;
         }
 

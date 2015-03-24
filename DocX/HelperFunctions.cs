@@ -485,7 +485,7 @@ namespace Novacode
                 list.CreateNewNumberingNumId(level, listType, startNumber, continueNumbering);
             }
 
-            if (!string.IsNullOrEmpty(listText))
+            if (listText != null) //I see no reason why you shouldn't be able to insert an empty element. It simplifies tasks such as populating an item from html.
             {
                 var newParagraphSection = new XElement
                     (
