@@ -4098,11 +4098,26 @@ namespace Novacode
             p.Xml.Add(chartElement);
         }
 
+        /// <summary>
+        /// Inserts a default TOC into the current document.
+        /// Title: Table of contents
+        /// Swithces will be: TOC \h \o '1-3' \u \z
+        /// </summary>
+        /// <returns>The inserted TableOfContents</returns>
         public TableOfContents InsertDefaultTableOfContents()
         {
             return InsertTableOfContents("Table of contents", TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U);
         }
         
+        /// <summary>
+        /// Inserts a TOC into the current document.
+        /// </summary>
+        /// <param name="title">The title of the TOC</param>
+        /// <param name="switches">Switches to be applied, see: http://officeopenxml.com/WPtableOfContents.php </param>
+        /// <param name="headerStyle">Lets you set the style name of the TOC header</param>
+        /// <param name="maxIncludeLevel">Lets you specify how many header levels should be included - default is 1-3</param>
+        /// <param name="rightTabPos">Lets you override the right tab position - this is not common</param>
+        /// <returns>The inserted TableOfContents</returns>
         public TableOfContents InsertTableOfContents(string title, TableOfContentsSwitches switches, string headerStyle = null, int maxIncludeLevel = 3, int? rightTabPos = null)
         {
             var toc = TableOfContents.CreateTableOfContents(this, title, switches, headerStyle, maxIncludeLevel, rightTabPos);
@@ -4110,6 +4125,16 @@ namespace Novacode
             return toc;
         }
 
+        /// <summary>
+        /// Inserts at TOC into the current document before the provided <see cref="reference"/>
+        /// </summary>
+        /// <param name="reference">The paragraph to use as reference</param>
+        /// <param name="title">The title of the TOC</param>
+        /// <param name="switches">Switches to be applied, see: http://officeopenxml.com/WPtableOfContents.php </param>
+        /// <param name="headerStyle">Lets you set the style name of the TOC header</param>
+        /// <param name="maxIncludeLevel">Lets you specify how many header levels should be included - default is 1-3</param>
+        /// <param name="rightTabPos">Lets you override the right tab position - this is not common</param>
+        /// <returns>The inserted TableOfContents</returns>
         public TableOfContents InsertTableOfContents(Paragraph reference, string title, TableOfContentsSwitches switches, string headerStyle = null, int maxIncludeLevel = 3, int? rightTabPos = null)
         {
             var toc = TableOfContents.CreateTableOfContents(this, title, switches, headerStyle, maxIncludeLevel, rightTabPos);
