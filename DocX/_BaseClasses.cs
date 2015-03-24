@@ -270,20 +270,19 @@ namespace Novacode
                 </w:sdt>
             ";
         public const string TocHeadingStyleBase = @"<w:style w:type='paragraph' w:styleId='{0}' xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'>
-            <w:name w:val='TOC Heading' />
-            <w:next w:val='Normal' />
-            <w:semiHidden />
-            <w:unhideWhenUsed />
+            <w:name w:val='TOC Heading'/>
+            <w:basedOn w:val='Heading1'/>
+            <w:next w:val='Normal'/>
+            <w:uiPriority w:val='39'/>
+            <w:semiHidden/>
+            <w:unhideWhenUsed/>
+            <w:qFormat/>
+            <w:rsid w:val='00E67AA6'/>
             <w:pPr>
-              <w:spacing w:after='0' />
+              <w:outlineLvl w:val='9'/>
             </w:pPr>
             <w:rPr>
-              <w:rFonts w:asciiTheme='majorHAnsi' w:eastAsiaTheme='majorEastAsia' w:hAnsiTheme='majorHAnsi' w:cstheme='majorBidi' />
-              <w:vanish />
-              <w:color w:val='365F91' w:themeColor='accent1' w:themeShade='BF' />
-              <w:sz w:val='32' />
-              <w:szCs w:val='32' />
-              <w:lang w:val='nb-NO' />
+              <w:lang w:eastAsia='nb-NO'/>
             </w:rPr>
           </w:style>
         ";

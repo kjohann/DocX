@@ -4095,6 +4095,25 @@ namespace Novacode
             p.Xml.Add(chartElement);
         }
 
+        public TableOfContents InsertDefaultTableOfContents()
+        {
+            return InsertTableOfContents("Table of contents", TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U);
+        }
+        
+        public TableOfContents InsertTableOfContents(string title, TableOfContentsSwitches switches, string headerStyle = null, int maxIncludeLevel = 3, int? rightTabPos = null)
+        {
+            var toc = TableOfContents.CreateTableOfContents(this, title, switches, headerStyle, maxIncludeLevel, rightTabPos);
+            Xml.Add(toc.Xml);
+            return toc;
+        }
+
+        public TableOfContents InsertTableOfContents(Paragraph reference, string title, TableOfContentsSwitches switches, string headerStyle = null, int maxIncludeLevel = 3, int? rightTabPos = null)
+        {
+            var toc = TableOfContents.CreateTableOfContents(this, title, switches, headerStyle, maxIncludeLevel, rightTabPos);
+            reference.Xml.AddBeforeSelf(toc.Xml);
+            return toc;
+        }
+
         #region IDisposable Members
 
         /// <summary>

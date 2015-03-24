@@ -2429,7 +2429,69 @@ namespace UnitTests
 
                 Assert.AreSame(xElement, actual);
             }
-        } 
+        }
+
+        [TestMethod]
+        public void InsertDefaultTableOfContents_WhenCalled_AddsTocToDocument()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                document.InsertDefaultTableOfContents();
+
+                var toc = TableOfContents.CreateTableOfContents(document, "Table of contents",
+                    TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z |
+                    TableOfContentsSwitches.U);
+                
+                Assert.IsTrue(document.Xml.Descendants().FirstOrDefault(x => XNode.DeepEquals(toc.Xml, x)) != null);
+            }
+        }
+
+        [TestMethod]
+        public void InsertTableOfContents_WhenCalledWithTitleSwitchesHeaderStyleMaxIncludeLevelAndRightTabPos_AddsTocToDocument()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                const string tableOfContentsTitle = "Table of contents";
+                const TableOfContentsSwitches tableOfContentsSwitches = TableOfContentsSwitches.O | TableOfContentsSwitches.A;
+                const string headerStyle = "HeaderStyle";
+                const int lastIncludeLevel = 4;
+                const int rightTabPos = 1337;
+                
+                document.InsertTableOfContents(tableOfContentsTitle, tableOfContentsSwitches, headerStyle, lastIncludeLevel, rightTabPos);
+
+                var toc = TableOfContents.CreateTableOfContents(document, tableOfContentsTitle, tableOfContentsSwitches, headerStyle, lastIncludeLevel, rightTabPos);
+
+                Assert.IsTrue(document.Xml.Descendants().FirstOrDefault(x => XNode.DeepEquals(toc.Xml, x)) != null);
+            }
+        }
+
+        [TestMethod]
+        public void InsertTableOfContents_WhenCalledWithReferenceTitleSwitchesHeaderStyleMaxIncludeLevelAndRightTabPos_AddsTocToDocumentAtExpectedLocation()
+        {
+            using (var document = DocX.Create("TableOfContents Test.docx"))
+            {
+                const string tableOfContentsTitle = "Table of contents";
+                const TableOfContentsSwitches tableOfContentsSwitches = TableOfContentsSwitches.O | TableOfContentsSwitches.A;
+                const string headerStyle = "HeaderStyle";
+                const int lastIncludeLevel = 4;
+                const int rightTabPos = 1337;
+
+                document.InsertParagraph("Paragraph1");
+                var p2 = document.InsertParagraph("Paragraph2");
+                var p3 = document.InsertParagraph("Paragraph3");
+
+                document.InsertTableOfContents(p3, tableOfContentsTitle, tableOfContentsSwitches, headerStyle, lastIncludeLevel, rightTabPos);
+
+                var toc = TableOfContents.CreateTableOfContents(document, tableOfContentsTitle, tableOfContentsSwitches, headerStyle, lastIncludeLevel, rightTabPos);
+
+                var tocElement = document.Xml.Descendants().FirstOrDefault(x => XNode.DeepEquals(toc.Xml, x));
+
+                Assert.IsTrue(p2.Xml.IsBefore(tocElement));
+                Assert.IsTrue(tocElement.IsAfter(p2.Xml));
+                Assert.IsTrue(tocElement.IsBefore(p3.Xml));
+                Assert.IsTrue(p3.Xml.IsAfter(tocElement));
+            }
+        }
     }
 }
        
