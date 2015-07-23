@@ -3991,7 +3991,7 @@ namespace Novacode
             List<Paragraph> paragraphs = new List<Paragraph>();
             foreach (var textForParagraph in textArray)
             {
-                Paragraph p = base.InsertParagraph(text);
+                Paragraph p = base.InsertParagraph(textForParagraph);
                 p.PackagePart = mainPart;
                 paragraphs.Add(p);
             }
