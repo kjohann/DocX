@@ -2092,6 +2092,20 @@ namespace Novacode
         }
 
         /// <summary>
+        /// Appends a text run to this Paragraph, using the given character style.
+        /// </summary>
+        /// <param name="value">The System.String to insert.</param>
+        /// <param name="styleId">The id of the character style to be used for this text run.</param>
+        public void InsertText(string value, string styleId)
+        {
+            var runStyleElement = new XElement(XName.Get("rStyle", DocX.w.NamespaceName));
+            runStyleElement.SetAttributeValue(XName.Get("val", DocX.w.NamespaceName), styleId);
+            var runPropertiesElement = new XElement(XName.Get("rPr", DocX.w.NamespaceName), runStyleElement);
+            Xml.Add(HelperFunctions.FormatInput(value, runPropertiesElement));
+            HelperFunctions.RenumberIDs(Document);
+        }
+
+        /// <summary>
         /// For use with Append() and AppendLine()
         /// </summary>
         /// <returns>This Paragraph in curent culture</returns>
