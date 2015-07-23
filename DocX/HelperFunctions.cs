@@ -112,10 +112,11 @@ namespace Novacode
 
             if (ft != null)
             {
-                if (alist.Count() > 0)
+                if (alist.Any())
                     last = alist.Last();
 
-                if (last != null && last.CompareTo(ft) == 0)
+                // Join adjacent runs that have the same formatting and do not cross a hyperlink boundary (they must both be inside a hyperlink or both be outside)
+                if (last != null && last.CompareTo(ft) == 0 && (last.containingHyperlinkId == null) == (ft.containingHyperlinkId == null))
                 {
                     // Update text of last entry.
                     last.text += ft.text;
@@ -149,10 +150,12 @@ namespace Novacode
             // e is a w:r element, lets find the rPr element.
             XElement rPr = e.Element(XName.Get("rPr", DocX.w.NamespaceName));
 
-            FormattedText ft = new FormattedText();
-            ft.text = text;
-            ft.index = 0;
-            ft.formatting = null;
+            // Find the id of the containing hyperlink, if any.
+            var containingHyperlink = e.AncestorsAndSelf(XName.Get("hyperlink", DocX.w.NamespaceName)).FirstOrDefault();
+            var ft = new FormattedText {
+                text = text,
+                containingHyperlinkId = containingHyperlink != null ? containingHyperlink.GetAttribute(XName.Get("id", DocX.r.NamespaceName), null) : null,
+            };
 
             // Return text with formatting.
             if (rPr != null)
