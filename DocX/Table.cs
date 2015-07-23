@@ -3456,23 +3456,20 @@ namespace Novacode
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
                 if (tcPr == null)
                     return Color.Empty;
-                else
-                {
-                    XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
-                    if (shd == null)
-                        return Color.Empty;
-                    else
-                    {
-                        XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
-                        if (fill == null)
-                            return Color.Empty;
-                        else
-                        {
-                            int argb = Int32.Parse(fill.Value.Replace("#", ""), NumberStyles.HexNumber);
-                            return Color.FromArgb(argb);
-                        }
-                    }
-                }
+
+                XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
+                if (shd == null)
+                    return Color.Empty;
+
+                XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
+                if (fill == null)
+                    return Color.Empty;
+
+                int argb;
+                if (!int.TryParse(fill.Value.Replace("#", ""), NumberStyles.HexNumber, null, out argb)) // If parsing fails, the value is probably "auto"
+                    return Color.Empty;
+
+                return Color.FromArgb(argb);
             }
 
             set
