@@ -166,9 +166,9 @@ namespace Novacode
             return p;
         }
 
-        public virtual Table InsertTableAfterSelf(int rowCount, int columnCount)
+        public virtual Table InsertTableAfterSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount);
+            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount, tableLook);
             Xml.AddAfterSelf(newTable);
             XElement newlyInserted = Xml.ElementsAfterSelf().First();
 
@@ -186,9 +186,9 @@ namespace Novacode
             //return t;
         }
 
-        public virtual Table InsertTableBeforeSelf(int rowCount, int columnCount)
+        public virtual Table InsertTableBeforeSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount);
+            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount, tableLook);
             Xml.AddBeforeSelf(newTable);
             XElement newlyInserted = Xml.ElementsBeforeSelf().Last();
 

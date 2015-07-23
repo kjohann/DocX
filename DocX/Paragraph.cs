@@ -801,9 +801,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableBeforeSelf(int rowCount, int columnCount)
+        public override Table InsertTableBeforeSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableBeforeSelf(rowCount, columnCount);
+            return base.InsertTableBeforeSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -869,9 +869,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableAfterSelf(int rowCount, int columnCount)
+        public override Table InsertTableAfterSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableAfterSelf(rowCount, columnCount);
+            return base.InsertTableAfterSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>

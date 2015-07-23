@@ -414,19 +414,27 @@ namespace Novacode
                 content)
             );
         }
-
-        internal static XElement CreateTable(int rowCount, int columnCount)
+        
+        internal static XElement CreateTable(int rowCount, int columnCount, TableLook tableLook)
 		{
 			int[] columnWidths = new int[columnCount];
 			for (int i = 0; i < columnCount; i++)
 			{
 				columnWidths[i] = 2310;
 			}
-			return CreateTable(rowCount, columnWidths);
+			return CreateTable(rowCount, columnWidths, tableLook);
 		}
 
-		internal static XElement CreateTable(int rowCount, int[] columnWidths)
-        {
+		internal static XElement CreateTable(int rowCount, int[] columnWidths, TableLook tableLook)
+		{
+		    tableLook = tableLook ?? new TableLook();
+		    int firstRow = Convert.ToInt32(tableLook.FirstRow);
+		    int lastRow = Convert.ToInt32(tableLook.LastRow);
+		    int firstColumn = Convert.ToInt32(tableLook.FirstColumn);
+		    int lastColumn = Convert.ToInt32(tableLook.LastColumn);
+		    int noHBand = Convert.ToInt32(tableLook.NoHorizontalBanding);
+		    int noVBand = Convert.ToInt32(tableLook.NoVerticalBanding);
+		    int tblLookValue = noVBand << 6 | noHBand << 5 | lastColumn << 4 | firstColumn << 3 | lastRow << 2 | firstRow << 1;
             XElement newTable =
             new XElement
             (
@@ -436,7 +444,14 @@ namespace Novacode
                     XName.Get("tblPr", DocX.w.NamespaceName),
                         new XElement(XName.Get("tblStyle", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), "TableGrid")),
                         new XElement(XName.Get("tblW", DocX.w.NamespaceName), new XAttribute(XName.Get("w", DocX.w.NamespaceName), "5000"), new XAttribute(XName.Get("type", DocX.w.NamespaceName), "auto")),
-                        new XElement(XName.Get("tblLook", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), "04A0"))
+                        new XElement(XName.Get("tblLook", DocX.w.NamespaceName),
+                            new XAttribute(XName.Get("val", DocX.w.NamespaceName), tblLookValue.ToString("X4")),
+                            new XAttribute(XName.Get("firstRow", DocX.w.NamespaceName), firstRow),
+                            new XAttribute(XName.Get("lastRow", DocX.w.NamespaceName), lastRow),
+                            new XAttribute(XName.Get("firstColumn", DocX.w.NamespaceName), firstColumn),
+                            new XAttribute(XName.Get("lastColumn", DocX.w.NamespaceName), lastColumn),
+                            new XAttribute(XName.Get("noHBand", DocX.w.NamespaceName), noHBand),
+                            new XAttribute(XName.Get("noVBand", DocX.w.NamespaceName), noVBand))
                 )
             );
 

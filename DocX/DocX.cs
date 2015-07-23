@@ -1806,22 +1806,22 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public new Table InsertTable(int rowCount, int columnCount)
+        public new Table InsertTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
             if (rowCount < 1 || columnCount < 1)
                 throw new ArgumentOutOfRangeException("Row and Column count must be greater than zero.");
-
-            Table t = base.InsertTable(rowCount, columnCount);
+            
+            Table t = base.InsertTable(rowCount, columnCount, tableLook);
             t.mainPart = mainPart;
             return t;
         }
 
-        public Table AddTable(int rowCount, int columnCount)
+        public Table AddTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
             if (rowCount < 1 || columnCount < 1)
                 throw new ArgumentOutOfRangeException("Row and Column count must be greater than zero.");
 
-            Table t = new Table(this, HelperFunctions.CreateTable(rowCount, columnCount));
+            Table t = new Table(this, HelperFunctions.CreateTable(rowCount, columnCount, tableLook));
             t.mainPart = mainPart;
             return t;
         }

@@ -1456,9 +1456,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableBeforeSelf(int rowCount, int columnCount)
+        public override Table InsertTableBeforeSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableBeforeSelf(rowCount, columnCount);
+            return base.InsertTableBeforeSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -1524,9 +1524,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableAfterSelf(int rowCount, int columnCount)
+        public override Table InsertTableAfterSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableAfterSelf(rowCount, columnCount);
+            return base.InsertTableAfterSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -3505,9 +3505,9 @@ namespace Novacode
             }
         }
 
-        public override Table InsertTable(int rowCount, int columnCount)
+        public override Table InsertTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            Table table = base.InsertTable(rowCount, columnCount);
+            Table table = base.InsertTable(rowCount, columnCount, tableLook);
             InsertParagraph(); //Dmitchern, It is necessary to put paragraph in the end of the cell, without it MS-Word will say that the document is corrupted
             //IMPORTANT: It will be better to check all methods that work with adding anything to cells
             return table;

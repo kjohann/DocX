@@ -795,17 +795,17 @@ namespace Novacode
             return p;
         }
 
-        public virtual Table InsertTable(int rowCount, int columnCount) //Dmitchern, changed to virtual, and overrided in Table.Cell
+        public virtual Table InsertTable(int rowCount, int columnCount, TableLook tableLook = null) //Dmitchern, changed to virtual, and overrided in Table.Cell
         {
-            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount);
+            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount, tableLook);
             Xml.Add(newTable);
 
             return new Table(Document, newTable);
         }
 
-        public Table InsertTable(int index, int rowCount, int columnCount)
+        public Table InsertTable(int index, int rowCount, int columnCount, TableLook tableLook = null)
         {
-            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount);
+            XElement newTable = HelperFunctions.CreateTable(rowCount, columnCount, tableLook);
 
             Paragraph p = HelperFunctions.GetFirstParagraphEffectedByInsert(Document, index);
 
