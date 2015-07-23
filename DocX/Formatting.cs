@@ -103,13 +103,12 @@ namespace Novacode
                         break;
                    
 
-                    case "rFonts": 
-                        formatting.FontFamily = 
-                            new FontFamily(
-                                option.GetAttribute(XName.Get("cs", DocX.w.NamespaceName), null) ??
-                                option.GetAttribute(XName.Get("ascii", DocX.w.NamespaceName), null) ??
+                    case "rFonts":
+                        var fontFamilyName = option.GetAttribute(XName.Get("cs", DocX.w.NamespaceName), null) ??
+                            option.GetAttribute(XName.Get("ascii", DocX.w.NamespaceName), null) ??
                                 option.GetAttribute(XName.Get("hAnsi", DocX.w.NamespaceName), null) ??
-                                option.GetAttribute(XName.Get("eastAsia", DocX.w.NamespaceName))); 
+                                    option.GetAttribute(XName.Get("eastAsia", DocX.w.NamespaceName), null);
+                        formatting.FontFamily = fontFamilyName != null ? new FontFamily(fontFamilyName) : null;
                         break;
                     case "color" :
                         try
