@@ -8,6 +8,7 @@ namespace Novacode
         public string text;
         public Formatting formatting;
         public string containingHyperlinkId;
+        public string footnoteId;
 
         public int CompareTo(object obj)
         {

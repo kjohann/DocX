@@ -77,6 +77,8 @@ namespace Novacode
                     goto case "br";
                 case "tc":
                     goto case "br";
+                case "footnoteReference":
+                    return Xml.GetAttribute(XName.Get("id", DocX.w.NamespaceName)).Length;
                 default:
                     return 0;
             }
@@ -138,9 +140,14 @@ namespace Novacode
         internal static FormattedText ToFormattedText(XElement e)
         {
             // The text representation of e.
-            String text = ToText(e);
-            if (text == String.Empty)
+            var text = ToText(e);
+            if (text == string.Empty)
                 return null;
+
+            // Save footnoteId for lookup
+            string footnoteId = null;
+            if (e.Name.Equals(XName.Get("footnoteReference", DocX.w.NamespaceName)))
+                footnoteId = e.GetAttribute(XName.Get("id", DocX.w.NamespaceName));
 
             // e is a w:t element, it must exist inside a w:r element or a w:tabs, lets climb until we find it.
             while (!e.Name.Equals(XName.Get("r", DocX.w.NamespaceName)) &&
@@ -155,6 +162,7 @@ namespace Novacode
             var ft = new FormattedText {
                 text = text,
                 containingHyperlinkId = containingHyperlink != null ? containingHyperlink.GetAttribute(XName.Get("id", DocX.r.NamespaceName), null) : null,
+                footnoteId = footnoteId
             };
 
             // Return text with formatting.
@@ -195,6 +203,8 @@ namespace Novacode
                     goto case "br";
                 case "tc":
                     goto case "tab";
+                case "footnoteReference":
+                    return e.GetAttribute(XName.Get("id", DocX.w.NamespaceName));
                 default: return "";
             }
         }
