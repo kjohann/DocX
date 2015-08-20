@@ -1456,9 +1456,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableBeforeSelf(int rowCount, int columnCount)
+        public override Table InsertTableBeforeSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableBeforeSelf(rowCount, columnCount);
+            return base.InsertTableBeforeSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -1524,9 +1524,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableAfterSelf(int rowCount, int columnCount)
+        public override Table InsertTableAfterSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableAfterSelf(rowCount, columnCount);
+            return base.InsertTableAfterSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -2108,6 +2108,16 @@ namespace Novacode
         }
 
         /// <summary>
+        /// The property name to set when specifiying an exact height
+        /// </summary>
+        /// <created>Nick Kusters</created>
+        const string _hRule_Exact = "exact";
+        /// <summary>
+        /// The property name to set when specifying a minimum height
+        /// </summary>
+        /// <created>Nick Kusters</created>
+        const string _hRule_AtLeast = "atLeast";
+        /// <summary>
         /// Height in pixels. // Added by Joel, refactored by Cathal.
         /// </summary>
         public double Height
@@ -2152,38 +2162,70 @@ namespace Novacode
                 // 15 "word units" in one pixel
                 return (heightInWordUnits / 15);
             }
-
             set
             {
-                /*
-                 * Get the trPr (table row properties) element for this Row,
-                 * null will be return if no such element exists.
-                 */
-                XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
-                if (trPr == null)
-                {
-                    Xml.SetElementValue(XName.Get("trPr", DocX.w.NamespaceName), string.Empty);
-                    trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
-                }
-
-                /*
-                 * Get the trHeight element for this Row,
-                 * null will be return if no such element exists.
-                 */
-                XElement trHeight = trPr.Element(XName.Get("trHeight", DocX.w.NamespaceName));
-                if (trHeight == null)
-                {
-                    trPr.SetElementValue(XName.Get("trHeight", DocX.w.NamespaceName), string.Empty);
-                    trHeight = trPr.Element(XName.Get("trHeight", DocX.w.NamespaceName));
-                }
-
-                // The hRule attribute needs to be set to exact.
-                trHeight.SetAttributeValue(XName.Get("hRule", DocX.w.NamespaceName), "exact");
-
-                // 15 "word units" is equal to one pixel. 
-                trHeight.SetAttributeValue(XName.Get("val", DocX.w.NamespaceName), (value * 15).ToString());
+                SetHeight(value, true);
             }
         }
+        /// <summary>
+        /// Helper method to set either the exact height or the min-height
+        /// </summary>
+        /// <param name="height">The height value to set (in pixels)</param>
+        /// <param name="exact">
+        /// If true, the height will be forced. 
+        /// If false, it will be treated as a minimum height, auto growing past it if need be.
+        /// </param>
+        /// <created>Nick Kusters</created>
+        void SetHeight(double height, bool exact)
+        {
+            /*
+             * Get the trPr (table row properties) element for this Row,
+             * null will be return if no such element exists.
+             */
+            XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
+            if (trPr == null)
+            {
+                Xml.SetElementValue(XName.Get("trPr", DocX.w.NamespaceName), string.Empty);
+                trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
+            }
+
+            /*
+             * Get the trHeight element for this Row,
+             * null will be return if no such element exists.
+             */
+            XElement trHeight = trPr.Element(XName.Get("trHeight", DocX.w.NamespaceName));
+            if (trHeight == null)
+            {
+                trPr.SetElementValue(XName.Get("trHeight", DocX.w.NamespaceName), string.Empty);
+                trHeight = trPr.Element(XName.Get("trHeight", DocX.w.NamespaceName));
+            }
+
+            // The hRule attribute needs to be set to exact.
+            trHeight.SetAttributeValue(XName.Get("hRule", DocX.w.NamespaceName), exact ? _hRule_Exact : _hRule_AtLeast);
+
+            // 15 "word units" is equal to one pixel. 
+            trHeight.SetAttributeValue(XName.Get("val", DocX.w.NamespaceName), (height * 15).ToString());
+        }
+        /// <summary>
+        /// Min-Height in pixels. // Added by Nick Kusters.
+        /// </summary>
+        /// <remarks>
+        /// Value will be treated as a minimum height, auto growing past it if need be.
+        /// </remarks>
+        /// <created>Nick Kusters</created>
+        public double MinHeight
+        {
+            get
+            {
+                // Just return the value from the normal height property since it doesn't care if you've set an exact or minimum height.
+                return Height;
+            }
+            set
+            {
+                SetHeight(value, false);
+            }
+        }
+
 
         /// <summary>
 		/// Set to true to make this row the table header row that will be repeated on each page
@@ -3414,23 +3456,20 @@ namespace Novacode
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
                 if (tcPr == null)
                     return Color.Empty;
-                else
-                {
-                    XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
-                    if (shd == null)
-                        return Color.Empty;
-                    else
-                    {
-                        XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
-                        if (fill == null)
-                            return Color.Empty;
-                        else
-                        {
-                            int argb = Int32.Parse(fill.Value.Replace("#", ""), NumberStyles.HexNumber);
-                            return Color.FromArgb(argb);
-                        }
-                    }
-                }
+
+                XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
+                if (shd == null)
+                    return Color.Empty;
+
+                XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
+                if (fill == null)
+                    return Color.Empty;
+
+                int argb;
+                if (!int.TryParse(fill.Value.Replace("#", ""), NumberStyles.HexNumber, null, out argb)) // If parsing fails, the value is probably "auto"
+                    return Color.Empty;
+
+                return Color.FromArgb(argb);
             }
 
             set
@@ -3463,9 +3502,9 @@ namespace Novacode
             }
         }
 
-        public override Table InsertTable(int rowCount, int columnCount)
+        public override Table InsertTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            Table table = base.InsertTable(rowCount, columnCount);
+            Table table = base.InsertTable(rowCount, columnCount, tableLook);
             InsertParagraph(); //Dmitchern, It is necessary to put paragraph in the end of the cell, without it MS-Word will say that the document is corrupted
             //IMPORTANT: It will be better to check all methods that work with adding anything to cells
             return table;

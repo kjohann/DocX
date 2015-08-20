@@ -2604,7 +2604,17 @@ namespace UnitTests
                     Assert.AreEqual(bookmarkNames[i], result[i]);
                 }
             }
-        }        
+        }
+
+        [TestMethod]
+        public void Save_does_not_remove_protection()
+        {
+            using (var document = DocX.Create("Protected.docx")) {
+                document.AddProtection(EditRestrictions.readOnly);
+                document.Save();
+                Assert.IsTrue(document.isProtected);
+            }
+        }
     }
 }
        

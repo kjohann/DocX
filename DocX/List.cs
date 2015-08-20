@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Packaging;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -24,6 +25,9 @@ namespace Novacode
         /// The ListItemType (bullet or numbered) of the list.
         /// </summary>
         public ListItemType? ListType { get; private set; }
+
+        private const string NumberingRelationshipType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering";
+        private static readonly Uri NumberingUri = new Uri("numbering.xml", UriKind.Relative);
 
         internal List(DocX document, XElement xml)
             : base(document, xml)
@@ -148,6 +152,11 @@ namespace Novacode
                 numXml.AddAfterSelf(
                     abstractNumXml
                 );
+            }
+
+            // Fixing an issue where all lists would get the default numbering style, even if they were supposed to be bulleted.
+            if (Document.mainPart.GetRelationshipsByType(NumberingRelationshipType).All(r => r.TargetUri != NumberingUri)) {
+                Document.mainPart.CreateRelationship(NumberingUri, TargetMode.Internal, NumberingRelationshipType);
             }
 
             NumId = numId;

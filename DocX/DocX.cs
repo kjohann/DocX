@@ -1806,22 +1806,22 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public new Table InsertTable(int rowCount, int columnCount)
+        public new Table InsertTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
             if (rowCount < 1 || columnCount < 1)
                 throw new ArgumentOutOfRangeException("Row and Column count must be greater than zero.");
-
-            Table t = base.InsertTable(rowCount, columnCount);
+            
+            Table t = base.InsertTable(rowCount, columnCount, tableLook);
             t.mainPart = mainPart;
             return t;
         }
 
-        public Table AddTable(int rowCount, int columnCount)
+        public Table AddTable(int rowCount, int columnCount, TableLook tableLook = null)
         {
             if (rowCount < 1 || columnCount < 1)
                 throw new ArgumentOutOfRangeException("Row and Column count must be greater than zero.");
 
-            Table t = new Table(this, HelperFunctions.CreateTable(rowCount, columnCount));
+            Table t = new Table(this, HelperFunctions.CreateTable(rowCount, columnCount, tableLook));
             t.mainPart = mainPart;
             return t;
         }
@@ -3221,8 +3221,9 @@ namespace Novacode
             using (TextWriter tw = new StreamWriter(mainPart.GetStream(FileMode.Create, FileAccess.Write)))
                 mainDoc.Save(tw, SaveOptions.None);
 
-            using (TextReader tr = new StreamReader(settingsPart.GetStream()))
-                settings = XDocument.Load(tr);
+            // This part somehow overwrites protection settings.
+            //using (TextReader tr = new StreamReader(settingsPart.GetStream()))
+            //    settings = XDocument.Load(tr);
 
             XElement body = mainDoc.Root.Element(w + "body");
             XElement sectPr = body.Descendants(w + "sectPr").FirstOrDefault();
@@ -3991,7 +3992,7 @@ namespace Novacode
             List<Paragraph> paragraphs = new List<Paragraph>();
             foreach (var textForParagraph in textArray)
             {
-                Paragraph p = base.InsertParagraph(text);
+                Paragraph p = base.InsertParagraph(textForParagraph);
                 p.PackagePart = mainPart;
                 paragraphs.Add(p);
             }

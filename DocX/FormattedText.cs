@@ -4,14 +4,11 @@ namespace Novacode
 {
     public class FormattedText: IComparable
     {
-        public FormattedText()
-        {
-        
-        }
-
         public int index;
         public string text;
         public Formatting formatting;
+        public string containingHyperlinkId;
+        public string footnoteId;
 
         public int CompareTo(object obj)
         {

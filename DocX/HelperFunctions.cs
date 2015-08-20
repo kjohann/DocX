@@ -77,6 +77,8 @@ namespace Novacode
                     goto case "br";
                 case "tc":
                     goto case "br";
+                case "footnoteReference":
+                    return Xml.GetAttribute(XName.Get("id", DocX.w.NamespaceName)).Length;
                 default:
                     return 0;
             }
@@ -112,10 +114,11 @@ namespace Novacode
 
             if (ft != null)
             {
-                if (alist.Count() > 0)
+                if (alist.Any())
                     last = alist.Last();
 
-                if (last != null && last.CompareTo(ft) == 0)
+                // Join adjacent runs that have the same formatting and do not cross a hyperlink boundary (they must both be inside a hyperlink or both be outside)
+                if (last != null && last.CompareTo(ft) == 0 && (last.containingHyperlinkId == null) == (ft.containingHyperlinkId == null))
                 {
                     // Update text of last entry.
                     last.text += ft.text;
@@ -137,9 +140,14 @@ namespace Novacode
         internal static FormattedText ToFormattedText(XElement e)
         {
             // The text representation of e.
-            String text = ToText(e);
-            if (text == String.Empty)
+            var text = ToText(e);
+            if (text == string.Empty)
                 return null;
+
+            // Save footnoteId for lookup
+            string footnoteId = null;
+            if (e.Name.Equals(XName.Get("footnoteReference", DocX.w.NamespaceName)))
+                footnoteId = e.GetAttribute(XName.Get("id", DocX.w.NamespaceName));
 
             // e is a w:t element, it must exist inside a w:r element or a w:tabs, lets climb until we find it.
             while (!e.Name.Equals(XName.Get("r", DocX.w.NamespaceName)) &&
@@ -149,10 +157,13 @@ namespace Novacode
             // e is a w:r element, lets find the rPr element.
             XElement rPr = e.Element(XName.Get("rPr", DocX.w.NamespaceName));
 
-            FormattedText ft = new FormattedText();
-            ft.text = text;
-            ft.index = 0;
-            ft.formatting = null;
+            // Find the id of the containing hyperlink, if any.
+            var containingHyperlink = e.AncestorsAndSelf(XName.Get("hyperlink", DocX.w.NamespaceName)).FirstOrDefault();
+            var ft = new FormattedText {
+                text = text,
+                containingHyperlinkId = containingHyperlink != null ? containingHyperlink.GetAttribute(XName.Get("id", DocX.r.NamespaceName), null) : null,
+                footnoteId = footnoteId
+            };
 
             // Return text with formatting.
             if (rPr != null)
@@ -192,6 +203,8 @@ namespace Novacode
                     goto case "br";
                 case "tc":
                     goto case "tab";
+                case "footnoteReference":
+                    return e.GetAttribute(XName.Get("id", DocX.w.NamespaceName));
                 default: return "";
             }
         }
@@ -414,19 +427,27 @@ namespace Novacode
                 content)
             );
         }
-
-        internal static XElement CreateTable(int rowCount, int columnCount)
+        
+        internal static XElement CreateTable(int rowCount, int columnCount, TableLook tableLook)
 		{
 			int[] columnWidths = new int[columnCount];
 			for (int i = 0; i < columnCount; i++)
 			{
 				columnWidths[i] = 2310;
 			}
-			return CreateTable(rowCount, columnWidths);
+			return CreateTable(rowCount, columnWidths, tableLook);
 		}
 
-		internal static XElement CreateTable(int rowCount, int[] columnWidths)
-        {
+		internal static XElement CreateTable(int rowCount, int[] columnWidths, TableLook tableLook)
+		{
+		    tableLook = tableLook ?? new TableLook();
+		    int firstRow = Convert.ToInt32(tableLook.FirstRow);
+		    int lastRow = Convert.ToInt32(tableLook.LastRow);
+		    int firstColumn = Convert.ToInt32(tableLook.FirstColumn);
+		    int lastColumn = Convert.ToInt32(tableLook.LastColumn);
+		    int noHBand = Convert.ToInt32(tableLook.NoHorizontalBanding);
+		    int noVBand = Convert.ToInt32(tableLook.NoVerticalBanding);
+		    int tblLookValue = noVBand << 6 | noHBand << 5 | lastColumn << 4 | firstColumn << 3 | lastRow << 2 | firstRow << 1;
             XElement newTable =
             new XElement
             (
@@ -436,7 +457,14 @@ namespace Novacode
                     XName.Get("tblPr", DocX.w.NamespaceName),
                         new XElement(XName.Get("tblStyle", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), "TableGrid")),
                         new XElement(XName.Get("tblW", DocX.w.NamespaceName), new XAttribute(XName.Get("w", DocX.w.NamespaceName), "5000"), new XAttribute(XName.Get("type", DocX.w.NamespaceName), "auto")),
-                        new XElement(XName.Get("tblLook", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), "04A0"))
+                        new XElement(XName.Get("tblLook", DocX.w.NamespaceName),
+                            new XAttribute(XName.Get("val", DocX.w.NamespaceName), tblLookValue.ToString("X4")),
+                            new XAttribute(XName.Get("firstRow", DocX.w.NamespaceName), firstRow),
+                            new XAttribute(XName.Get("lastRow", DocX.w.NamespaceName), lastRow),
+                            new XAttribute(XName.Get("firstColumn", DocX.w.NamespaceName), firstColumn),
+                            new XAttribute(XName.Get("lastColumn", DocX.w.NamespaceName), lastColumn),
+                            new XAttribute(XName.Get("noHBand", DocX.w.NamespaceName), noHBand),
+                            new XAttribute(XName.Get("noVBand", DocX.w.NamespaceName), noVBand))
                 )
             );
 

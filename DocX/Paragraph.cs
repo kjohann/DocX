@@ -246,6 +246,19 @@ namespace Novacode
             }
         }
 
+
+        public List<Footnote> Footnotes
+        {
+            get
+            {
+                var footnoteElements = Xml.Descendants(XName.Get("footnoteReference", DocX.w.NamespaceName));
+                return footnoteElements.Select(element => {
+                    var id = element.GetAttribute(XName.Get("id", DocX.w.NamespaceName));
+                    return new Footnote(Document, id);
+                }).ToList();
+            }
+        }
+
         ///<summary>
         /// The style name of the paragraph.
         ///</summary>
@@ -436,7 +449,75 @@ namespace Novacode
                 }
             }
         }
-
+         /// <summary>
+        /// This paragraph will be kept on the same page as the next paragraph
+        /// </summary>
+        /// <example>
+        /// Create a Paragraph that will stay on the same page as the paragraph that comes next
+        /// <code>
+        /// // Create a new document.
+        /// using (DocX document = DocX.Create("Test.docx"))
+        /// 
+        /// {
+        ///     // Create a new Paragraph with the text "Hello World".
+        ///     Paragraph p = document.InsertParagraph("Hello World.");
+        ///     p.KeepWithNext();
+        ///     document.InsertParagraph("Previous paragraph will appear on the same page as this paragraph");
+        ///     // Save all changes made to this document.
+        ///     document.Save();
+        /// }
+        /// </code>
+        /// </example>
+        /// <param name="keepWithNext"></param>
+        /// <returns></returns>
+        public Paragraph KeepWithNext(bool keepWithNext = true)
+        {
+            var pPr = GetOrCreate_pPr();
+            var keepWithNextE = pPr.Element(XName.Get("keepNext", DocX.w.NamespaceName));
+            if (keepWithNextE == null && keepWithNext)
+            {
+                pPr.Add(new XElement(XName.Get("keepNext", DocX.w.NamespaceName)));
+            }
+            if (!keepWithNext && keepWithNextE != null)
+            {
+                keepWithNextE.Remove();
+            }
+            return this;
+ 
+        }
+         /// <summary>
+        /// Keep all lines in this paragraph together on a page
+        /// </summary>
+        /// <example>
+        /// Create a Paragraph whose lines will stay together on a single page
+        /// <code>
+        /// // Create a new document.
+        /// using (DocX document = DocX.Create("Test.docx"))
+        /// {
+        ///     // Create a new Paragraph with the text "Hello World".
+        ///     Paragraph p = document.InsertParagraph("All lines of this paragraph will appear on the same page...\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6...");
+        ///     p.KeepLinesTogether();
+        ///     // Save all changes made to this document.
+        ///     document.Save();
+        /// }
+        /// </code>
+        /// </example>
+        /// <param name="keepTogether"></param>
+        /// <returns></returns>
+        public Paragraph KeepLinesTogether(bool keepTogether = true)
+        {
+            var pPr = GetOrCreate_pPr();
+            var keepLinesE = pPr.Element(XName.Get("keepLines", DocX.w.NamespaceName));
+            if (keepLinesE == null && keepTogether)
+            {
+                pPr.Add(new XElement(XName.Get("keepLines", DocX.w.NamespaceName)));
+            }
+            if (!keepTogether && keepLinesE != null)
+            {
+                keepLinesE.Remove();
+            }
+            return this;
+        }
         /// <summary>
         /// If the pPr element doesent exist it is created, either way it is returned by this function.
         /// </summary>
@@ -733,9 +814,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableBeforeSelf(int rowCount, int columnCount)
+        public override Table InsertTableBeforeSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableBeforeSelf(rowCount, columnCount);
+            return base.InsertTableBeforeSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -801,9 +882,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public override Table InsertTableAfterSelf(int rowCount, int columnCount)
+        public override Table InsertTableAfterSelf(int rowCount, int columnCount, TableLook tableLook = null)
         {
-            return base.InsertTableAfterSelf(rowCount, columnCount);
+            return base.InsertTableAfterSelf(rowCount, columnCount, tableLook);
         }
 
         /// <summary>
@@ -1588,10 +1669,11 @@ namespace Novacode
 
             int newDocPrId = 1;
             List<string> existingIds = new List<string>();
-            foreach (var docPrId in document.Xml.Descendants(XName.Get("docPr", DocX.wp.NamespaceName)))
+            foreach (var bookmarkId in document.Xml.Descendants(XName.Get("bookmarkStart", DocX.w.NamespaceName)))
             {
-                existingIds.Add(docPrId.Attributes().FirstOrDefault(x => x.Name == "id").Value);
-
+                var idAtt = bookmarkId.Attributes().FirstOrDefault(x => x.Name.LocalName == "id");
+                if (idAtt != null)
+                    existingIds.Add(idAtt.Value);
             }
 
             while (existingIds.Contains(newDocPrId.ToString()))
@@ -2023,6 +2105,18 @@ namespace Novacode
         }
 
         /// <summary>
+        /// Appends a text run to this Paragraph, using the given character style.
+        /// </summary>
+        /// <param name="value">The System.String to insert.</param>
+        /// <param name="styleName">The name of the character style to be used for this text run.</param>
+        public void InsertText(string value, string styleName)
+        {
+            var runPropertiesElement = CreateRunPropertiesWithStyle(styleName);
+            Xml.Add(HelperFunctions.FormatInput(value, runPropertiesElement));
+            HelperFunctions.RenumberIDs(Document);
+        }
+
+        /// <summary>
         /// For use with Append() and AppendLine()
         /// </summary>
         /// <returns>This Paragraph in curent culture</returns>
@@ -2153,6 +2247,7 @@ namespace Novacode
         /// Add an image to a document, create a custom view of that image (picture) and then insert it into a Paragraph using append.
         /// </summary>
         /// <param name="p">The Picture to append.</param>
+        /// <param name="styleName">The name of the character style to be used for this picture.</param>
         /// <returns>The Paragraph with the Picture now appended.</returns>
         /// <example>
         /// Add an image to a document, create a custom view of that image (picture) and then insert it into a Paragraph using append.
@@ -2180,7 +2275,7 @@ namespace Novacode
         /// }
         /// </code>
         /// </example>
-        public Paragraph AppendPicture(Picture p)
+        public Paragraph AppendPicture(Picture p, string styleName = null)
         {
             // Convert the path of this mainPart to its equilivant rels file path.
             string path = mainPart.Uri.OriginalString.Replace("/word/", "");
@@ -2193,8 +2288,17 @@ namespace Novacode
             // Check to see if a rel for this Picture exists, create it if not.
             var Id = GetOrGenerateRel(p);
 
-            // Add the Picture Xml to the end of the Paragragraph Xml.
-            Xml.Add(p.Xml);
+            // Add the Picture Xml to the end of the Paragragraph Xml. Use styleName if provided.
+            if (styleName == null)
+            {
+                Xml.Add(p.Xml);
+            }
+            else
+            {
+                var runPropertiesElement = CreateRunPropertiesWithStyle(styleName);
+                var runElement = new XElement(XName.Get("r", DocX.w.NamespaceName), runPropertiesElement, p.Xml);
+                Xml.Add(runElement);
+            }
 
             // Extract the attribute id from the Pictures Xml.
             XAttribute a_id =
@@ -3285,16 +3389,28 @@ namespace Novacode
         {
             spacingBefore *= 20;
 
-            if (spacingBefore - (int)spacingBefore == 0)
+            var pPr = GetOrCreate_pPr();
+            var spacing = pPr.Element(XName.Get("spacing", DocX.w.NamespaceName));
+            if (spacingBefore > 0)
             {
-                if (!(spacingBefore > -1585 && spacingBefore < 1585))
-                    throw new ArgumentException("SpacingBefore", "Value must be in the range: -1584 - 1584");
+                 if (spacing == null)
+                 {
+                    spacing = new XElement(XName.Get("spacing", DocX.w.NamespaceName));
+                    pPr.Add(spacing);
+                 }
+                 var attr = spacing.Attribute(XName.Get("before", DocX.w.NamespaceName));
+                 if (attr == null)
+                     spacing.SetAttributeValue(XName.Get("before", DocX.w.NamespaceName), spacingBefore);
+                 else
+                    attr.SetValue(spacingBefore);
             }
-
-            else
-                throw new ArgumentException("SpacingBefore", "Value must be either a whole or acurate to one decimal, examples: 32, 32.1, 32.2, 32.9");
-
-            ApplyTextFormattingProperty(XName.Get("before", DocX.w.NamespaceName), string.Empty, new XAttribute(XName.Get("val", DocX.w.NamespaceName), spacingBefore));
+            if (Math.Abs(spacingBefore) < 0.1f && spacing != null)
+            {
+                var attr = spacing.Attribute(XName.Get("before", DocX.w.NamespaceName));
+                attr.Remove();
+                if (!spacing.HasAttributes)
+                    spacing.Remove();
+            }
 
             return this;
         }
@@ -3303,16 +3419,28 @@ namespace Novacode
         {
             spacingAfter *= 20;
 
-            if (spacingAfter - (int)spacingAfter == 0)
+            var pPr = GetOrCreate_pPr();
+            var spacing = pPr.Element(XName.Get("spacing", DocX.w.NamespaceName));
+            if (spacingAfter > 0)
             {
-                if (!(spacingAfter > -1585 && spacingAfter < 1585))
-                    throw new ArgumentException("SpacingAfter", "Value must be in the range: -1584 - 1584");
+                if (spacing == null)
+                {
+                    spacing = new XElement(XName.Get("spacing", DocX.w.NamespaceName));
+                    pPr.Add(spacing);
+                }
+                var attr = spacing.Attribute(XName.Get("after", DocX.w.NamespaceName));
+                if (attr == null)
+                    spacing.SetAttributeValue(XName.Get("after", DocX.w.NamespaceName), spacingAfter);
+                else
+                    attr.SetValue(spacingAfter);
             }
-
-            else
-                throw new ArgumentException("SpacingAfter", "Value must be either a whole or acurate to one decimal, examples: 32, 32.1, 32.2, 32.9");
-
-            ApplyTextFormattingProperty(XName.Get("after", DocX.w.NamespaceName), string.Empty, new XAttribute(XName.Get("val", DocX.w.NamespaceName), spacingAfter));
+            if (Math.Abs(spacingAfter) < 0.1f && spacing != null)
+            {
+                var attr = spacing.Attribute(XName.Get("after", DocX.w.NamespaceName));
+                attr.Remove();
+                if (!spacing.HasAttributes)
+                    spacing.Remove();
+            }
 
             return this;
         }
@@ -4125,6 +4253,13 @@ namespace Novacode
             {
                 SpacingAfter(value);
             }
+        }
+
+        private static XElement CreateRunPropertiesWithStyle(string styleName)
+        {
+            var runStyleElement = new XElement(XName.Get("rStyle", DocX.w.NamespaceName));
+            runStyleElement.SetAttributeValue(XName.Get("val", DocX.w.NamespaceName), styleName);
+            return new XElement(XName.Get("rPr", DocX.w.NamespaceName), runStyleElement);
         }
     }
 
